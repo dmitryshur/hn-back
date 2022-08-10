@@ -1,4 +1,4 @@
-package hackernews
+package server
 
 import (
 	"github.com/dmitryshur/hackernews/pkg/jsonlog"

@@ -1,4 +1,4 @@
-package hackernews
+package server
 
 import (
 	"github.com/julienschmidt/httprouter"

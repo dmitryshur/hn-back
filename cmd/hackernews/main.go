@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 import "github.com/dmitryshur/hackernews/pkg/jsonlog"
-import "github.com/dmitryshur/hackernews/pkg/hackernews"
+import "github.com/dmitryshur/hackernews/pkg/server"
 
 // TODO: create get endpoint to get items.
 // TODO: add type param (newest, best)
 // TODO: add pagination params (offset, limit)
 func main() {
-	var cfg hackernews.Config
+	var cfg server.Config
 
 	flag.IntVar(&cfg.Port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.Env, "env", "development", "Environment (development|staging|production)")
@@ -29,7 +29,7 @@ func main() {
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
-	app := hackernews.NewApplication(cfg, logger)
+	app := server.NewApplication(cfg, logger)
 	err := app.Serve()
 	if err != nil {
 		logger.PrintFatal(err, nil)
