@@ -2,6 +2,8 @@ package fetcher
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -15,14 +17,55 @@ const (
 type Fetcher struct {
 }
 
+type Type string
+
+const (
+	Story      Type = "story"
+	Job        Type = "job"
+	Comment    Type = "comment"
+	Poll       Type = "poll"
+	PollOption Type = "pollopt"
+)
+
 type stories []int
+
+type Item struct {
+	Id          int     `json:"id"`
+	Type        Type    `json:"type"`
+	Deleted     *bool   `json:"deleted"`
+	By          *string `json:"by"`
+	Time        *int    `json:"time"`
+	Text        *string `json:"text"`
+	Dead        *bool   `json:"dead"`
+	Parent      *int    `json:"parent"`
+	Kids        *[]int  `json:"kids"`
+	Url         *string `json:"url"`
+	Score       *int    `json:"score"`
+	Title       *string `json:"title"`
+	Parts       *[]int  `json:"parts"`
+	Descendants *int    `json:"descendants"`
+}
 
 func NewFetcher() *Fetcher {
 	return &Fetcher{}
 }
 
-func (f *Fetcher) FetchItem() {
+func (f *Fetcher) FetchItem(id int) (*Item, error) {
+	url := strings.Replace(itemUrl, "{{id}}", strconv.Itoa(id), -1)
 
+	response, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	var item Item
+	err = DecodeFromJson(response.Body, &item)
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
 }
 
 func (f *Fetcher) FetchBestStories() (stories, error) {
