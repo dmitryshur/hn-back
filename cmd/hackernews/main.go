@@ -8,7 +8,6 @@ import (
 import "github.com/dmitryshur/hackernews/pkg/jsonlog"
 import "github.com/dmitryshur/hackernews/pkg/server"
 
-// TODO: create get endpoint to get items.
 // TODO: add type param (newest, best)
 // TODO: add pagination params (offset, limit)
 func main() {

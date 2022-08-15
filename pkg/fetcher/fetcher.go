@@ -1,20 +1,37 @@
 package fetcher
 
 import (
+	"fmt"
+	"github.com/dmitryshur/hackernews/pkg/jsonlog"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
-	itemUrl            = "https://hacker-news.firebaseio.com/v0/item/{{id}}.json"
-	bestStoriesUrl     = "https://hacker-news.firebaseio.com/v0/beststories.json"
-	newestStoriesUrl   = "https://hacker-news.firebaseio.com/v0/newstories.json"
+	itemUrl            = "/item/{{id}}.json"
+	bestStoriesUrl     = "/beststories.json"
+	newestStoriesUrl   = "/newstories.json"
 	bestStoriesCount   = 200
 	newestStoriesCount = 500
 )
 
+type Api struct {
+	client  *http.Client
+	baseUrl string
+}
+
+func NewApi(client *http.Client, baseUrl string) *Api {
+	return &Api{client: client, baseUrl: baseUrl}
+}
+
 type Fetcher struct {
+	fetchInterval time.Duration
+	logger        *jsonlog.Logger
+	stories       map[int]struct{}
+	api           *Api
 }
 
 type Type string
@@ -38,6 +55,7 @@ type Item struct {
 	Text        *string `json:"text"`
 	Dead        *bool   `json:"dead"`
 	Parent      *int    `json:"parent"`
+	Poll        *int    `json:"poll"`
 	Kids        *[]int  `json:"kids"`
 	Url         *string `json:"url"`
 	Score       *int    `json:"score"`
@@ -46,14 +64,27 @@ type Item struct {
 	Descendants *int    `json:"descendants"`
 }
 
-func NewFetcher() *Fetcher {
-	return &Fetcher{}
+func NewFetcher(interval time.Duration, api *Api) *Fetcher {
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
+	return &Fetcher{fetchInterval: interval, logger: logger, api: api}
+}
+
+func (f *Fetcher) Start() {
+	for {
+		bestStories, err := f.FetchBestStories()
+		if err != nil {
+			f.logger.PrintError(err, nil)
+		}
+		fmt.Println(bestStories)
+	}
 }
 
 func (f *Fetcher) FetchItem(id int) (*Item, error) {
 	url := strings.Replace(itemUrl, "{{id}}", strconv.Itoa(id), -1)
+	url = f.api.baseUrl + url
 
-	response, err := http.Get(url)
+	response, err := f.api.client.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +100,8 @@ func (f *Fetcher) FetchItem(id int) (*Item, error) {
 }
 
 func (f *Fetcher) FetchBestStories() (stories, error) {
-	response, err := http.Get(bestStoriesUrl)
+	url := f.api.baseUrl + bestStoriesUrl
+	response, err := f.api.client.Get(url)
 
 	if err != nil {
 		return nil, err
@@ -86,7 +118,8 @@ func (f *Fetcher) FetchBestStories() (stories, error) {
 }
 
 func (f *Fetcher) FetchNewestStories() (stories, error) {
-	response, err := http.Get(newestStoriesUrl)
+	url := f.api.baseUrl + newestStoriesUrl
+	response, err := f.api.client.Get(url)
 
 	if err != nil {
 		return nil, err

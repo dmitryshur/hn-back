@@ -15,3 +15,7 @@ func DecodeFromJson[T any](input io.Reader, dest *T) error {
 
 	return nil
 }
+
+func ToPointer[T any](n T) *T {
+	return &n
+}
