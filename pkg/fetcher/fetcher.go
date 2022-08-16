@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -70,13 +71,32 @@ func NewFetcher(interval time.Duration, api *Api) *Fetcher {
 	return &Fetcher{fetchInterval: interval, logger: logger, api: api}
 }
 
+// TODO: fetch newest stories. handle comments
 func (f *Fetcher) Start() {
 	for {
 		bestStories, err := f.FetchBestStories()
 		if err != nil {
 			f.logger.PrintError(err, nil)
 		}
-		fmt.Println(bestStories)
+
+		for _, storyId := range bestStories {
+			item, err := f.FetchItem(storyId)
+			if err != nil {
+				f.logger.PrintError(err, map[string]string{
+					"id": strconv.Itoa(storyId),
+				})
+			}
+
+			comments, err := f.FetchComments(item)
+			if err != nil {
+				f.logger.PrintError(err, map[string]string{
+					"id": strconv.Itoa(storyId),
+				})
+			}
+			fmt.Println(len(*comments))
+		}
+
+		time.Sleep(f.fetchInterval)
 	}
 }
 
@@ -97,6 +117,50 @@ func (f *Fetcher) FetchItem(id int) (*Item, error) {
 	}
 
 	return &item, nil
+}
+
+func (f *Fetcher) FetchComments(item *Item) (*[]Item, error) {
+	if item.Kids == nil || len(*item.Kids) == 0 {
+		return nil, nil
+	}
+
+	commentIds := make(map[int]struct{})
+	for _, id := range *item.Kids {
+		commentIds[id] = struct{}{}
+	}
+
+	var comments []Item
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	for len(commentIds) > 0 {
+		for id := range commentIds {
+			wg.Add(1)
+
+			go func(id int) {
+				defer wg.Done()
+
+				comment, err := f.FetchItem(id)
+				if err != nil {
+					f.logger.PrintError(err, map[string]string{
+						"id": strconv.Itoa(id),
+					})
+				}
+
+				mu.Lock()
+				comments = append(comments, *comment)
+				delete(commentIds, comment.Id)
+				if comment.Kids != nil && len(*comment.Kids) > 0 {
+					for _, kidId := range *comment.Kids {
+						commentIds[kidId] = struct{}{}
+					}
+				}
+				mu.Unlock()
+			}(id)
+		}
+		wg.Wait()
+	}
+
+	return &comments, nil
 }
 
 func (f *Fetcher) FetchBestStories() (stories, error) {

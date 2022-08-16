@@ -8,8 +8,6 @@ import (
 import "github.com/dmitryshur/hackernews/pkg/jsonlog"
 import "github.com/dmitryshur/hackernews/pkg/server"
 
-// TODO: add type param (newest, best)
-// TODO: add pagination params (offset, limit)
 func main() {
 	var cfg server.Config
 
