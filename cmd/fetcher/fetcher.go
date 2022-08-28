@@ -1,8 +1,7 @@
-package fetcher
+package main
 
 import (
-	"fmt"
-	"github.com/dmitryshur/hackernews/pkg/jsonlog"
+	"github.com/dmitryshur/hackernews/internal/jsonlog"
 	"net/http"
 	"os"
 	"strconv"
@@ -33,6 +32,7 @@ type Fetcher struct {
 	logger        *jsonlog.Logger
 	stories       map[int]struct{}
 	api           *Api
+	store         *Store
 }
 
 type Type string
@@ -65,10 +65,10 @@ type Item struct {
 	Descendants *int    `json:"descendants"`
 }
 
-func NewFetcher(interval time.Duration, api *Api) *Fetcher {
+func NewFetcher(interval time.Duration, api *Api, store *Store) *Fetcher {
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
-	return &Fetcher{fetchInterval: interval, logger: logger, api: api}
+	return &Fetcher{fetchInterval: interval, logger: logger, api: api, store: store}
 }
 
 // TODO: fetch newest stories. handle comments
@@ -93,7 +93,7 @@ func (f *Fetcher) Start() {
 					"id": strconv.Itoa(storyId),
 				})
 			}
-			fmt.Println(len(*comments))
+			f.store.Save(comments)
 		}
 
 		time.Sleep(f.fetchInterval)

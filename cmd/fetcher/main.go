@@ -4,13 +4,14 @@ import (
 	"net/http"
 	"time"
 )
-import "github.com/dmitryshur/hackernews/pkg/fetcher"
 
 const baseUrl = "https://hacker-news.firebaseio.com/v0"
 
+// TODO: need a method to update a story (fetch all the comments)
 func main() {
-	api := fetcher.NewApi(http.DefaultClient, baseUrl)
-	f := fetcher.NewFetcher(time.Second*600, api)
+	api := NewApi(http.DefaultClient, baseUrl)
+	s := NewStore()
+	f := NewFetcher(time.Second*600, api, s)
 
 	f.Start()
 }
