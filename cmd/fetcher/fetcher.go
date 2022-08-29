@@ -71,15 +71,21 @@ func NewFetcher(interval time.Duration, api *Api, store Db) *Fetcher {
 	return &Fetcher{fetchInterval: interval, logger: logger, api: api, store: store}
 }
 
-// TODO: fetch newest stories. handle comments
 func (f *Fetcher) Start() {
 	for {
 		bestStories, err := f.FetchBestStories()
 		if err != nil {
 			f.logger.PrintError(err, nil)
 		}
+		newestStories, err := f.FetchNewestStories()
+		if err != nil {
+			f.logger.PrintError(err, nil)
+		}
 
-		for _, storyId := range bestStories {
+		allStories := stories{}
+		allStories = append(bestStories, newestStories...)
+
+		for _, storyId := range allStories {
 			item, err := f.FetchItem(storyId)
 			if err != nil {
 				f.logger.PrintError(err, map[string]string{
