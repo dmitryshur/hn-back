@@ -237,4 +237,89 @@ func TestFetcher(t *testing.T) {
 		}
 
 	})
+
+	t.Run("start running", func(t *testing.T) {
+		api := NewApi(server.Client(), server.URL)
+		store := NewMockStore()
+		fetcher := NewFetcher(0, api, store)
+		expected := map[int][]Item{
+			32411232: {
+				{
+					Id:   32411282,
+					Type: "comment",
+				},
+			},
+			32627286: {
+				{
+					Id:   32627419,
+					Type: "comment",
+				},
+				{
+					Id:   32627299,
+					Type: "comment",
+				},
+			},
+			32626745: {
+				{
+					Id:   32627477,
+					Type: "comment",
+				},
+				{
+					Id:   32626746,
+					Type: "comment",
+				},
+			},
+			32626667: {
+				{
+					Id:   32626668,
+					Type: "comment",
+				},
+				{
+					Id:   32626685,
+					Type: "comment",
+				},
+			},
+			32626663: {
+				{
+					Id:   32626998,
+					Type: "comment",
+					Kids: &[]int{
+						32627096,
+						32627156,
+					},
+				},
+				{
+					Id:   32627096,
+					Type: "comment",
+				},
+				{
+					Id:   32627287,
+					Type: "comment",
+				},
+				{
+					Id:   32626728,
+					Type: "comment",
+				},
+				{
+					Id:   32627156,
+					Type: "comment",
+				},
+			},
+		}
+
+		fetcher.Start()
+		for storyId, comments := range store.state {
+			if _, ok := expected[storyId]; !ok {
+				t.Errorf("missing comments for story %d in state", storyId)
+			}
+
+			for _, comment := range expected[storyId] {
+				if !Includes(comments, func(c Item) bool {
+					return comment.Id == c.Id
+				}) {
+					t.Errorf("expected %v to be in state", comment)
+				}
+			}
+		}
+	})
 }

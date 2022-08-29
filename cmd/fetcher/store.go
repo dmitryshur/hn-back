@@ -1,11 +1,7 @@
 package main
 
-import (
-	"fmt"
-)
-
 type Db interface {
-	Save(items *[]Item) error
+	Save(story *Item, comments []Item) error
 }
 
 type Store struct {
@@ -16,6 +12,6 @@ func NewStore() *Store {
 	return &Store{state: make(map[int]int)}
 }
 
-func (s *Store) Save(items *[]Item) {
-	fmt.Println(len(*items))
+func (s *Store) Save(story *Item, comments []Item) error {
+	return nil
 }

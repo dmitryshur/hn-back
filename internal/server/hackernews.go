@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/dmitryshur/hackernews/pkg/jsonlog"
+	"github.com/dmitryshur/hackernews/internal/jsonlog"
 	"sync"
 )
 

@@ -32,7 +32,7 @@ type Fetcher struct {
 	logger        *jsonlog.Logger
 	stories       map[int]struct{}
 	api           *Api
-	store         *Store
+	store         Db
 }
 
 type Type string
@@ -65,7 +65,7 @@ type Item struct {
 	Descendants *int    `json:"descendants"`
 }
 
-func NewFetcher(interval time.Duration, api *Api, store *Store) *Fetcher {
+func NewFetcher(interval time.Duration, api *Api, store Db) *Fetcher {
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	return &Fetcher{fetchInterval: interval, logger: logger, api: api, store: store}
@@ -93,7 +93,11 @@ func (f *Fetcher) Start() {
 					"id": strconv.Itoa(storyId),
 				})
 			}
-			f.store.Save(comments)
+			f.store.Save(item, *comments)
+		}
+
+		if f.fetchInterval == 0 {
+			break
 		}
 
 		time.Sleep(f.fetchInterval)
