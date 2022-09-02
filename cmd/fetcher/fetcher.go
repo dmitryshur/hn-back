@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/dmitryshur/hackernews/internal/data"
 	"github.com/dmitryshur/hackernews/internal/jsonlog"
 	"net/http"
 	"os"
@@ -27,45 +28,18 @@ func NewApi(client *http.Client, baseUrl string) *Api {
 	return &Api{client: client, baseUrl: baseUrl}
 }
 
+// TODO: how to replace Db with models
 type Fetcher struct {
 	fetchInterval time.Duration
 	logger        *jsonlog.Logger
 	stories       map[int]struct{}
 	api           *Api
-	store         Db
+	store         data.Db
 }
-
-type Type string
-
-const (
-	Story      Type = "story"
-	Job        Type = "job"
-	Comment    Type = "comment"
-	Poll       Type = "poll"
-	PollOption Type = "pollopt"
-)
 
 type stories []int
 
-type Item struct {
-	Id          int     `json:"id"`
-	Type        Type    `json:"type"`
-	Deleted     *bool   `json:"deleted"`
-	By          *string `json:"by"`
-	Time        *int    `json:"time"`
-	Text        *string `json:"text"`
-	Dead        *bool   `json:"dead"`
-	Parent      *int    `json:"parent"`
-	Poll        *int    `json:"poll"`
-	Kids        *[]int  `json:"kids"`
-	Url         *string `json:"url"`
-	Score       *int    `json:"score"`
-	Title       *string `json:"title"`
-	Parts       *[]int  `json:"parts"`
-	Descendants *int    `json:"descendants"`
-}
-
-func NewFetcher(interval time.Duration, api *Api, store Db) *Fetcher {
+func NewFetcher(interval time.Duration, api *Api, store data.Db) *Fetcher {
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	return &Fetcher{fetchInterval: interval, logger: logger, api: api, store: store}
@@ -86,20 +60,22 @@ func (f *Fetcher) Start() {
 		allStories = append(bestStories, newestStories...)
 
 		for _, storyId := range allStories {
-			item, err := f.FetchItem(storyId)
+			story, err := f.FetchItem(storyId)
 			if err != nil {
 				f.logger.PrintError(err, map[string]string{
 					"id": strconv.Itoa(storyId),
 				})
 			}
 
-			comments, err := f.FetchComments(item)
+			comments, err := f.FetchComments(story)
 			if err != nil {
 				f.logger.PrintError(err, map[string]string{
 					"id": strconv.Itoa(storyId),
 				})
 			}
-			f.store.Save(item, *comments)
+
+			f.store.InsertStory(story)
+			f.store.InsertComments(story, *comments)
 		}
 
 		if f.fetchInterval == 0 {
@@ -110,7 +86,7 @@ func (f *Fetcher) Start() {
 	}
 }
 
-func (f *Fetcher) FetchItem(id int) (*Item, error) {
+func (f *Fetcher) FetchItem(id int) (*data.Item, error) {
 	url := strings.Replace(itemUrl, "{{id}}", strconv.Itoa(id), -1)
 	url = f.api.baseUrl + url
 
@@ -120,7 +96,7 @@ func (f *Fetcher) FetchItem(id int) (*Item, error) {
 	}
 	defer response.Body.Close()
 
-	var item Item
+	var item data.Item
 	err = DecodeFromJson(response.Body, &item)
 	if err != nil {
 		return nil, err
@@ -129,7 +105,7 @@ func (f *Fetcher) FetchItem(id int) (*Item, error) {
 	return &item, nil
 }
 
-func (f *Fetcher) FetchComments(item *Item) (*[]Item, error) {
+func (f *Fetcher) FetchComments(item *data.Item) (*[]data.Item, error) {
 	if item.Kids == nil || len(*item.Kids) == 0 {
 		return nil, nil
 	}
@@ -139,7 +115,7 @@ func (f *Fetcher) FetchComments(item *Item) (*[]Item, error) {
 		commentIds[id] = struct{}{}
 	}
 
-	var comments []Item
+	var comments []data.Item
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	for len(commentIds) > 0 {

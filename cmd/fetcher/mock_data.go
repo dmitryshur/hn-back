@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/dmitryshur/hackernews/internal/data"
 	"log"
 )
 
@@ -29,7 +30,7 @@ func (m Mocks) Stories() []byte {
 }
 
 func (m Mocks) Item(id int) []byte {
-	items := map[int]Item{
+	items := map[int]data.Item{
 		32411232: {
 			Id:   32411232,
 			Type: "story",

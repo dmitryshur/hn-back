@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/dmitryshur/hackernews/internal/data"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -8,6 +9,45 @@ import (
 	"testing"
 	"time"
 )
+
+type ModelsMock struct {
+	state map[int][]int
+}
+
+func NewModelsMock() *ModelsMock {
+	return &ModelsMock{state: map[int][]int{}}
+}
+
+func (m ModelsMock) InsertStory(story *data.Item) error {
+	if _, ok := m.state[story.Id]; !ok {
+		m.state[story.Id] = []int{}
+	}
+
+	return nil
+}
+
+func (m ModelsMock) GetStory() error {
+	return nil
+}
+
+func (m ModelsMock) InsertComments(story *data.Item, comments []data.Item) error {
+	if _, ok := m.state[story.Id]; !ok {
+		m.state[story.Id] = []int{}
+	}
+
+	commentsIds := make([]int, len(comments))
+	for _, comment := range comments {
+		commentsIds = append(commentsIds, comment.Id)
+	}
+
+	m.state[story.Id] = append(m.state[story.Id], commentsIds...)
+
+	return nil
+}
+
+func (m ModelsMock) GetComments() error {
+	return nil
+}
 
 func TestFetcher(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +70,7 @@ func TestFetcher(t *testing.T) {
 
 	t.Run("fetch best stories", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
-		store := NewStore()
+		store := NewModelsMock()
 		fetcher := NewFetcher(time.Second*5, api, store)
 		expected := []int{
 			32411232,
@@ -55,7 +95,7 @@ func TestFetcher(t *testing.T) {
 
 	t.Run("fetch newest stories", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
-		store := NewStore()
+		store := NewModelsMock()
 		fetcher := NewFetcher(time.Second*5, api, store)
 		expected := []int{
 			32411232,
@@ -80,9 +120,9 @@ func TestFetcher(t *testing.T) {
 
 	t.Run("fetch item of type story", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
-		store := NewStore()
+		store := NewModelsMock()
 		fetcher := NewFetcher(time.Second*5, api, store)
-		expected := Item{
+		expected := data.Item{
 			Id:   32411232,
 			Type: "story",
 			Kids: &[]int{
@@ -102,28 +142,28 @@ func TestFetcher(t *testing.T) {
 
 	t.Run("fetch comments of a story", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
-		store := NewStore()
+		store := NewModelsMock()
 		fetcher := NewFetcher(time.Second*5, api, store)
 
 		tt := []struct {
-			story    Item
-			expected []Item
+			story    data.Item
+			expected []data.Item
 		}{
 			{
-				story: Item{
+				story: data.Item{
 					Id:   32411232,
 					Type: "story",
 					Kids: &[]int{
 						32411282,
 					},
 				},
-				expected: []Item{{
+				expected: []data.Item{{
 					Id:   32411282,
 					Type: "comment",
 				}},
 			},
 			{
-				story: Item{
+				story: data.Item{
 					Id:   32627286,
 					Type: "story",
 					Kids: &[]int{
@@ -131,7 +171,7 @@ func TestFetcher(t *testing.T) {
 						32627299,
 					},
 				},
-				expected: []Item{
+				expected: []data.Item{
 					{
 						Id:   32627419,
 						Type: "comment",
@@ -143,7 +183,7 @@ func TestFetcher(t *testing.T) {
 				},
 			},
 			{
-				story: Item{
+				story: data.Item{
 					Id:   32626745,
 					Type: "story",
 					Kids: &[]int{
@@ -151,7 +191,7 @@ func TestFetcher(t *testing.T) {
 						32626746,
 					},
 				},
-				expected: []Item{
+				expected: []data.Item{
 					{
 						Id:   32627477,
 						Type: "comment",
@@ -163,7 +203,7 @@ func TestFetcher(t *testing.T) {
 				},
 			},
 			{
-				story: Item{
+				story: data.Item{
 					Id:   32626746,
 					Type: "story",
 					Kids: &[]int{
@@ -171,7 +211,7 @@ func TestFetcher(t *testing.T) {
 						32626685,
 					},
 				},
-				expected: []Item{
+				expected: []data.Item{
 					{
 						Id:   32626668,
 						Type: "comment",
@@ -183,7 +223,7 @@ func TestFetcher(t *testing.T) {
 				},
 			},
 			{
-				story: Item{
+				story: data.Item{
 					Id:   32626663,
 					Type: "story",
 					Kids: &[]int{
@@ -192,7 +232,7 @@ func TestFetcher(t *testing.T) {
 						32626728,
 					},
 				},
-				expected: []Item{
+				expected: []data.Item{
 					{
 						Id:   32626998,
 						Type: "comment",
@@ -228,7 +268,7 @@ func TestFetcher(t *testing.T) {
 			}
 
 			for _, v := range *got {
-				if !Includes(testCase.expected, func(item Item) bool {
+				if !Includes(testCase.expected, func(item data.Item) bool {
 					return v.Id == item.Id
 				}) {
 					t.Errorf("got %v, expected %v", *got, testCase.expected)
@@ -240,70 +280,30 @@ func TestFetcher(t *testing.T) {
 
 	t.Run("start running", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
-		store := NewMockStore()
+		store := NewModelsMock()
 		fetcher := NewFetcher(0, api, store)
-		expected := map[int][]Item{
+		expected := map[int][]int{
 			32411232: {
-				{
-					Id:   32411282,
-					Type: "comment",
-				},
+				32411282,
 			},
 			32627286: {
-				{
-					Id:   32627419,
-					Type: "comment",
-				},
-				{
-					Id:   32627299,
-					Type: "comment",
-				},
+				32627419,
+				32627299,
 			},
 			32626745: {
-				{
-					Id:   32627477,
-					Type: "comment",
-				},
-				{
-					Id:   32626746,
-					Type: "comment",
-				},
+				32627477,
+				32626746,
 			},
 			32626667: {
-				{
-					Id:   32626668,
-					Type: "comment",
-				},
-				{
-					Id:   32626685,
-					Type: "comment",
-				},
+				32626668,
+				32626685,
 			},
 			32626663: {
-				{
-					Id:   32626998,
-					Type: "comment",
-					Kids: &[]int{
-						32627096,
-						32627156,
-					},
-				},
-				{
-					Id:   32627096,
-					Type: "comment",
-				},
-				{
-					Id:   32627287,
-					Type: "comment",
-				},
-				{
-					Id:   32626728,
-					Type: "comment",
-				},
-				{
-					Id:   32627156,
-					Type: "comment",
-				},
+				32626998,
+				32627096,
+				32627287,
+				32626728,
+				32627156,
 			},
 		}
 
@@ -314,8 +314,8 @@ func TestFetcher(t *testing.T) {
 			}
 
 			for _, comment := range expected[storyId] {
-				if !Includes(comments, func(c Item) bool {
-					return comment.Id == c.Id
+				if !Includes(comments, func(commentId int) bool {
+					return comment == commentId
 				}) {
 					t.Errorf("expected %v to be in state", comment)
 				}
