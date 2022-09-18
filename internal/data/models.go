@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -12,10 +13,8 @@ var (
 
 type Db interface {
 	InsertStory(story *Item) error
-	GetStory() error
 
 	InsertComments(story *Item, comments []Item) error
-	GetComments() error
 }
 
 type Models struct {
@@ -31,17 +30,13 @@ func NewModel(db *sql.DB) Models {
 }
 
 func (m Models) InsertStory(story *Item) error {
-	panic("implement me")
-}
+	fmt.Println("inserting story")
 
-func (m Models) GetStory() error {
-	panic("implement me")
+	return nil
 }
 
 func (m Models) InsertComments(story *Item, comments []Item) error {
-	panic("implement me")
-}
+	fmt.Println("inserting comments")
 
-func (m Models) GetComments() error {
-	panic("implement me")
+	return nil
 }

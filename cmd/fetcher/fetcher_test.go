@@ -2,8 +2,10 @@ package main
 
 import (
 	"github.com/dmitryshur/hackernews/internal/data"
+	"github.com/dmitryshur/hackernews/internal/jsonlog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"strconv"
 	"testing"
@@ -26,10 +28,6 @@ func (m ModelsMock) InsertStory(story *data.Item) error {
 	return nil
 }
 
-func (m ModelsMock) GetStory() error {
-	return nil
-}
-
 func (m ModelsMock) InsertComments(story *data.Item, comments []data.Item) error {
 	if _, ok := m.state[story.Id]; !ok {
 		m.state[story.Id] = []int{}
@@ -42,10 +40,6 @@ func (m ModelsMock) InsertComments(story *data.Item, comments []data.Item) error
 
 	m.state[story.Id] = append(m.state[story.Id], commentsIds...)
 
-	return nil
-}
-
-func (m ModelsMock) GetComments() error {
 	return nil
 }
 
@@ -71,7 +65,10 @@ func TestFetcher(t *testing.T) {
 	t.Run("fetch best stories", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
 		store := NewModelsMock()
-		fetcher := NewFetcher(time.Second*5, api, store)
+		config := config{fetchInterval: time.Second * 5}
+		logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
+		fetcher := NewFetcher(config, logger, api, store)
 		expected := []int{
 			32411232,
 			32627286,
@@ -96,7 +93,10 @@ func TestFetcher(t *testing.T) {
 	t.Run("fetch newest stories", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
 		store := NewModelsMock()
-		fetcher := NewFetcher(time.Second*5, api, store)
+		config := config{fetchInterval: time.Second * 5}
+		logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
+		fetcher := NewFetcher(config, logger, api, store)
 		expected := []int{
 			32411232,
 			32627286,
@@ -121,7 +121,10 @@ func TestFetcher(t *testing.T) {
 	t.Run("fetch item of type story", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
 		store := NewModelsMock()
-		fetcher := NewFetcher(time.Second*5, api, store)
+		config := config{fetchInterval: time.Second * 5}
+		logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
+		fetcher := NewFetcher(config, logger, api, store)
 		expected := data.Item{
 			Id:   32411232,
 			Type: "story",
@@ -143,7 +146,10 @@ func TestFetcher(t *testing.T) {
 	t.Run("fetch comments of a story", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
 		store := NewModelsMock()
-		fetcher := NewFetcher(time.Second*5, api, store)
+		config := config{fetchInterval: time.Second * 5}
+		logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
+		fetcher := NewFetcher(config, logger, api, store)
 
 		tt := []struct {
 			story    data.Item
@@ -281,7 +287,10 @@ func TestFetcher(t *testing.T) {
 	t.Run("start running", func(t *testing.T) {
 		api := NewApi(server.Client(), server.URL)
 		store := NewModelsMock()
-		fetcher := NewFetcher(0, api, store)
+		config := config{fetchInterval: 0}
+		logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
+		fetcher := NewFetcher(config, logger, api, store)
 		expected := map[int][]int{
 			32411232: {
 				32411282,

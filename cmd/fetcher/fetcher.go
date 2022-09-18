@@ -4,7 +4,6 @@ import (
 	"github.com/dmitryshur/hackernews/internal/data"
 	"github.com/dmitryshur/hackernews/internal/jsonlog"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,21 +27,27 @@ func NewApi(client *http.Client, baseUrl string) *Api {
 	return &Api{client: client, baseUrl: baseUrl}
 }
 
-// TODO: how to replace Db with models
-type Fetcher struct {
+type config struct {
 	fetchInterval time.Duration
-	logger        *jsonlog.Logger
-	stories       map[int]struct{}
-	api           *Api
-	store         data.Db
+	db            struct {
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  string
+	}
+}
+
+type Fetcher struct {
+	config config
+	logger *jsonlog.Logger
+	api    *Api
+	store  data.Db
 }
 
 type stories []int
 
-func NewFetcher(interval time.Duration, api *Api, store data.Db) *Fetcher {
-	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
-
-	return &Fetcher{fetchInterval: interval, logger: logger, api: api, store: store}
+func NewFetcher(config config, logger *jsonlog.Logger, api *Api, store data.Db) *Fetcher {
+	return &Fetcher{config: config, logger: logger, api: api, store: store}
 }
 
 func (f *Fetcher) Start() {
@@ -78,11 +83,11 @@ func (f *Fetcher) Start() {
 			f.store.InsertComments(story, *comments)
 		}
 
-		if f.fetchInterval == 0 {
+		if f.config.fetchInterval == 0 {
 			break
 		}
 
-		time.Sleep(f.fetchInterval)
+		time.Sleep(f.config.fetchInterval)
 	}
 }
 
