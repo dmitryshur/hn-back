@@ -21,3 +21,7 @@ db/migrations/new:
 db/migrations/up:
 	@echo 'Running up migrations...'
 	migrate -path ./migrations -database ${DB_DSN} up
+
+.PHONY: test
+test:
+	go test ./...

@@ -2,13 +2,7 @@ package data
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
-)
-
-var (
-	ErrRecordNotFound = errors.New("record now found")
-	ErrEditConflict   = errors.New("edit conflict")
 )
 
 type Db interface {
@@ -30,7 +24,10 @@ func NewModel(db *sql.DB) Models {
 }
 
 func (m Models) InsertStory(story *Item) error {
-	fmt.Println("inserting story")
+	err := m.Stories.Insert(story)
+	if err != nil {
+		return fmt.Errorf("insertStory %w", err)
+	}
 
 	return nil
 }

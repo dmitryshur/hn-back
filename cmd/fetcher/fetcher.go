@@ -79,7 +79,12 @@ func (f *Fetcher) Start() {
 				})
 			}
 
-			f.store.InsertStory(story)
+			err = f.store.InsertStory(story)
+			if err != nil {
+				f.logger.PrintError(err, nil)
+			}
+
+			// TODO: insert comments
 			f.store.InsertComments(story, *comments)
 		}
 
