@@ -22,6 +22,12 @@ db/migrations/up:
 	@echo 'Running up migrations...'
 	migrate -path ./migrations -database ${DB_DSN} up
 
+## db/psql: connect to the database using psql
+.PHONY: db/psql
+db/psql:
+	psql ${DB_DSN}
+
 .PHONY: test
 test:
 	go test ./...
+

@@ -33,7 +33,10 @@ func (m Models) InsertStory(story *Item) error {
 }
 
 func (m Models) InsertComments(story *Item, comments []Item) error {
-	fmt.Println("inserting comments")
+	err := m.Comments.Insert(story, comments)
+	if err != nil {
+		return fmt.Errorf("insertComments %w", err)
+	}
 
 	return nil
 }

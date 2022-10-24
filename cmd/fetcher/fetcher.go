@@ -84,8 +84,10 @@ func (f *Fetcher) Start() {
 				f.logger.PrintError(err, nil)
 			}
 
-			// TODO: insert comments
-			f.store.InsertComments(story, *comments)
+			err = f.store.InsertComments(story, *comments)
+			if err != nil {
+				f.logger.PrintError(err, nil)
+			}
 		}
 
 		if f.config.fetchInterval == 0 {
