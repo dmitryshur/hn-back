@@ -14,7 +14,8 @@ import (
 
 const baseUrl = "https://hacker-news.firebaseio.com/v0"
 
-// TODO: need a method to update a story (fetch all the comments)
+// TODO: need a method to update a story (fetch all the comments). when the user re-enters a story, some newer
+//  comments might be missing
 func main() {
 	var cfg config
 
