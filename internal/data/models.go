@@ -34,21 +34,12 @@ func (m Models) InsertStory(story *Item) error {
 }
 
 func (m Models) GetStories(t string) ([]*Story, error) {
-	if t == "newest" {
-		stories, err := m.Stories.GetNewest()
-		if err != nil {
-			return nil, fmt.Errorf("newest getStories %w", err)
-		}
-
-		return stories, nil
-	} else {
-		err := m.Stories.GetBest()
-		if err != nil {
-			return nil, fmt.Errorf("best getStories %w", err)
-		}
+	stories, err := m.Stories.GetAll(t)
+	if err != nil {
+		return nil, fmt.Errorf("getStories %w", err)
 	}
 
-	return nil, nil
+	return stories, nil
 }
 
 func (m Models) InsertComments(story *Item, comments []Item) error {

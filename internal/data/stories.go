@@ -15,7 +15,7 @@ type Story struct {
 	By          *string   `json:"by"`
 	Time        *int      `json:"time"`
 	Dead        *bool     `json:"dead"`
-	Kids        *[]string `json:"kids"`
+	Kids        *[]string `json:"kids,omitempty"`
 	Descendants *int      `json:"descendants"`
 	Score       *int      `json:"score"`
 	Title       *string   `json:"title"`
@@ -66,10 +66,12 @@ func (s StoryModel) Insert(story *Item) error {
 	return nil
 }
 
-func (s StoryModel) GetNewest() ([]*Story, error) {
-	query := `SELECT id, deleted, type, by, time, dead, kids, descendants, score, title, url
-				FROM stories
-				ORDER BY time DESC`
+func (s StoryModel) GetAll(t string) ([]*Story, error) {
+	sort := IfElse(t == "newest", "date", "score")
+	query := fmt.Sprintf(`
+		SELECT id, deleted, type, by, time, dead, descendants, score, title, url
+		FROM stories
+		ORDER BY %s DESC`, sort)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -85,7 +87,6 @@ func (s StoryModel) GetNewest() ([]*Story, error) {
 
 	for rows.Next() {
 		var story Story
-		story.Kids = ToPointer([]string{})
 
 		err := rows.Scan(
 			&story.Id,
@@ -94,7 +95,6 @@ func (s StoryModel) GetNewest() ([]*Story, error) {
 			&story.By,
 			&story.Time,
 			&story.Dead,
-			pq.Array(story.Kids),
 			&story.Descendants,
 			&story.Score,
 			&story.Title,
@@ -113,8 +113,4 @@ func (s StoryModel) GetNewest() ([]*Story, error) {
 	}
 
 	return stories, nil
-}
-
-func (s StoryModel) GetBest() error {
-	return nil
 }

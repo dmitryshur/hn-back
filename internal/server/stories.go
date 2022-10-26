@@ -5,7 +5,6 @@ import (
 	"net/http"
 )
 
-// TODO: stories type (newest or best)
 func (app *application) listStoriesHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Filters
