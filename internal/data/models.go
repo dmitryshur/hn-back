@@ -7,6 +7,7 @@ import (
 
 type Db interface {
 	InsertStory(story *Item) error
+	GetStories(t string) ([]*Story, error)
 
 	InsertComments(story *Item, comments []Item) error
 }
@@ -30,6 +31,24 @@ func (m Models) InsertStory(story *Item) error {
 	}
 
 	return nil
+}
+
+func (m Models) GetStories(t string) ([]*Story, error) {
+	if t == "newest" {
+		stories, err := m.Stories.GetNewest()
+		if err != nil {
+			return nil, fmt.Errorf("newest getStories %w", err)
+		}
+
+		return stories, nil
+	} else {
+		err := m.Stories.GetBest()
+		if err != nil {
+			return nil, fmt.Errorf("best getStories %w", err)
+		}
+	}
+
+	return nil, nil
 }
 
 func (m Models) InsertComments(story *Item, comments []Item) error {

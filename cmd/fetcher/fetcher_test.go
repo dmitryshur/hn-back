@@ -28,6 +28,11 @@ func (m ModelsMock) InsertStory(story *data.Item) error {
 	return nil
 }
 
+// TODO: add tests
+func (m ModelsMock) GetStories(t string) ([]*data.Story, error) {
+	return nil, nil
+}
+
 func (m ModelsMock) InsertComments(story *data.Item, comments []data.Item) error {
 	if _, ok := m.state[story.Id]; !ok {
 		m.state[story.Id] = []int{}

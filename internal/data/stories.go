@@ -9,17 +9,17 @@ import (
 )
 
 type Story struct {
-	Id          int     `json:"id"`
-	Deleted     *bool   `json:"deleted"`
-	Type        string  `json:"type"`
-	By          *string `json:"by"`
-	Time        *int    `json:"time"`
-	Dead        *bool   `json:"dead"`
-	Kids        *[]int  `json:"kids"`
-	Descendants *int    `json:"descendants"`
-	Score       *int    `json:"score"`
-	Title       *string `json:"title"`
-	Url         *string `json:"url"`
+	Id          int       `json:"id"`
+	Deleted     *bool     `json:"deleted"`
+	Type        string    `json:"type"`
+	By          *string   `json:"by"`
+	Time        *int      `json:"time"`
+	Dead        *bool     `json:"dead"`
+	Kids        *[]string `json:"kids"`
+	Descendants *int      `json:"descendants"`
+	Score       *int      `json:"score"`
+	Title       *string   `json:"title"`
+	Url         *string   `json:"url"`
 }
 
 type StoryModel struct {
@@ -63,5 +63,58 @@ func (s StoryModel) Insert(story *Item) error {
 		return fmt.Errorf("insert %w", err)
 	}
 
+	return nil
+}
+
+func (s StoryModel) GetNewest() ([]*Story, error) {
+	query := `SELECT id, deleted, type, by, time, dead, kids, descendants, score, title, url
+				FROM stories
+				ORDER BY time DESC`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := s.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var stories []*Story
+
+	for rows.Next() {
+		var story Story
+		story.Kids = ToPointer([]string{})
+
+		err := rows.Scan(
+			&story.Id,
+			&story.Deleted,
+			&story.Type,
+			&story.By,
+			&story.Time,
+			&story.Dead,
+			pq.Array(story.Kids),
+			&story.Descendants,
+			&story.Score,
+			&story.Title,
+			&story.Url,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		stories = append(stories, &story)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return stories, nil
+}
+
+func (s StoryModel) GetBest() error {
 	return nil
 }

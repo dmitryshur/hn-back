@@ -12,7 +12,7 @@ run/fetcher:
 
 .PHONY: run/app
 run/app:
-	go run ./cmd/app
+	go run ./cmd/app -db-dsn=${DB_DSN}
 
 ## db/migrations/new name=$1: create a new database migration
 .PHONY: db/migrations/new

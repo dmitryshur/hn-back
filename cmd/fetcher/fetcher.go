@@ -83,11 +83,15 @@ func (f *Fetcher) Start() {
 			if err != nil {
 				f.logger.PrintError(err, nil)
 			}
+			f.logger.PrintInfo("inserted story", nil)
 
 			err = f.store.InsertComments(story, *comments)
 			if err != nil {
 				f.logger.PrintError(err, nil)
 			}
+			f.logger.PrintInfo("inserted comments", map[string]string{
+				"count": strconv.Itoa(len(*comments)),
+			})
 		}
 
 		if f.config.fetchInterval == 0 {
