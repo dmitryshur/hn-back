@@ -28,8 +28,13 @@ func (m ModelsMock) InsertStory(story *data.Item) error {
 	return nil
 }
 
-// TODO: add tests
+// TODO: add test
 func (m ModelsMock) GetStories(t string) ([]*data.Story, error) {
+	return nil, nil
+}
+
+// TODO: add test
+func (m ModelsMock) GetStory(id int64) (*data.Story, error) {
 	return nil, nil
 }
 

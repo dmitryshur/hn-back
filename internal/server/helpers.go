@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/dmitryshur/hackernews/internal/validator"
+	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -53,4 +55,15 @@ func (app *application) readInt(qs url.Values, key string, defaultValue int, v *
 	}
 
 	return i
+}
+
+func (app *application) readIDParam(r *http.Request) (int64, error) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
+	if err != nil || id < 1 {
+		return 0, errors.New("invalid id parameter")
+	}
+
+	return id, nil
 }

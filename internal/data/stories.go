@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/lib/pq"
 	"time"
@@ -26,44 +27,39 @@ type StoryModel struct {
 	DB *sql.DB
 }
 
-func (s StoryModel) Insert(story *Item) error {
-	query := `INSERT INTO stories (id, deleted, type, by, time, dead, kids, descendants, score, title, url)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-				ON CONFLICT (id) DO UPDATE 
-					SET deleted = $2,
-					    type = $3,
-					    by = $4,
-					    time = $5,
-					    dead = $6,
-					    kids = $7,
-					    descendants = $8,
-					    score = $9,
-					    title = $10,
-					    url = $11`
+func (s StoryModel) Get(id int64) (*Story, error) {
+	query := `SELECT id, deleted, type, by, time, dead, descendants, score, title, url
+				FROM stories
+				WHERE id = $1`
 
-	args := []interface{}{
-		story.Id,
-		story.Deleted,
-		story.Type,
-		story.By,
-		story.Time,
-		story.Dead,
-		pq.Array(*story.Kids),
-		story.Descendants,
-		story.Score,
-		story.Title,
-		story.Url,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := s.DB.ExecContext(ctx, query, args...)
+	var story Story
+
+	err := s.DB.QueryRowContext(ctx, query, id).Scan(
+		&story.Id,
+		&story.Deleted,
+		&story.Type,
+		&story.By,
+		&story.Time,
+		&story.Dead,
+		&story.Descendants,
+		&story.Score,
+		&story.Title,
+		&story.Url,
+	)
+
 	if err != nil {
-		return fmt.Errorf("insert %w", err)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
 	}
 
-	return nil
+	return &story, nil
 }
 
 func (s StoryModel) GetAll(t string) ([]*Story, error) {
@@ -113,4 +109,44 @@ func (s StoryModel) GetAll(t string) ([]*Story, error) {
 	}
 
 	return stories, nil
+}
+
+func (s StoryModel) Insert(story *Item) error {
+	query := `INSERT INTO stories (id, deleted, type, by, time, dead, kids, descendants, score, title, url)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+				ON CONFLICT (id) DO UPDATE 
+					SET deleted = $2,
+					    type = $3,
+					    by = $4,
+					    time = $5,
+					    dead = $6,
+					    kids = $7,
+					    descendants = $8,
+					    score = $9,
+					    title = $10,
+					    url = $11`
+
+	args := []interface{}{
+		story.Id,
+		story.Deleted,
+		story.Type,
+		story.By,
+		story.Time,
+		story.Dead,
+		pq.Array(*story.Kids),
+		story.Descendants,
+		story.Score,
+		story.Title,
+		story.Url,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := s.DB.ExecContext(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("insert %w", err)
+	}
+
+	return nil
 }

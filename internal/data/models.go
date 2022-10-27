@@ -2,12 +2,20 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 )
 
+var (
+	ErrRecordNotFound = errors.New("record now found")
+	ErrEditConflict   = errors.New("edit conflict")
+)
+
+// TODO: add get for all comments
 type Db interface {
-	InsertStory(story *Item) error
+	GetStory(id int64) (*Story, error)
 	GetStories(t string) ([]*Story, error)
+	InsertStory(story *Item) error
 
 	InsertComments(story *Item, comments []Item) error
 }
@@ -24,13 +32,13 @@ func NewModel(db *sql.DB) Models {
 	}
 }
 
-func (m Models) InsertStory(story *Item) error {
-	err := m.Stories.Insert(story)
+func (m Models) GetStory(id int64) (*Story, error) {
+	story, err := m.Stories.Get(id)
 	if err != nil {
-		return fmt.Errorf("insertStory %w", err)
+		return nil, fmt.Errorf("getStory %w", err)
 	}
 
-	return nil
+	return story, nil
 }
 
 func (m Models) GetStories(t string) ([]*Story, error) {
@@ -40,6 +48,15 @@ func (m Models) GetStories(t string) ([]*Story, error) {
 	}
 
 	return stories, nil
+}
+
+func (m Models) InsertStory(story *Item) error {
+	err := m.Stories.Insert(story)
+	if err != nil {
+		return fmt.Errorf("insertStory %w", err)
+	}
+
+	return nil
 }
 
 func (m Models) InsertComments(story *Item, comments []Item) error {
