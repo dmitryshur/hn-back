@@ -33,7 +33,7 @@ func (app *application) showStoryHandler(w http.ResponseWriter, r *http.Request)
 
 func (app *application) listStoriesHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Filters
+		ListStoriesFilters
 	}
 
 	v := validator.New()
@@ -41,7 +41,7 @@ func (app *application) listStoriesHandler(w http.ResponseWriter, r *http.Reques
 
 	input.Type = app.readString(qs, "type", "best")
 
-	if ValidateFilters(v, input.Filters); !v.Valid() {
+	if ValidateListStoriesFilters(v, input.ListStoriesFilters); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}

@@ -10,17 +10,17 @@ import (
 )
 
 type Story struct {
-	Id          int       `json:"id"`
-	Deleted     *bool     `json:"deleted"`
-	Type        string    `json:"type"`
-	By          *string   `json:"by"`
-	Time        *int      `json:"time"`
-	Dead        *bool     `json:"dead"`
-	Kids        *[]string `json:"kids,omitempty"`
-	Descendants *int      `json:"descendants"`
-	Score       *int      `json:"score"`
-	Title       *string   `json:"title"`
-	Url         *string   `json:"url"`
+	Id          int64    `json:"id"`
+	Deleted     *bool    `json:"deleted"`
+	Type        string   `json:"type"`
+	By          *string  `json:"by"`
+	Time        *int     `json:"time"`
+	Dead        *bool    `json:"dead"`
+	Kids        *[]int64 `json:"kids,omitempty"`
+	Descendants *int     `json:"descendants"`
+	Score       *int     `json:"score"`
+	Title       *string  `json:"title"`
+	Url         *string  `json:"url"`
 }
 
 type StoryModel struct {

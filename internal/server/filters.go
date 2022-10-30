@@ -4,10 +4,18 @@ import (
 	"github.com/dmitryshur/hackernews/internal/validator"
 )
 
-type Filters struct {
+type ListStoriesFilters struct {
 	Type string
 }
 
-func ValidateFilters(v *validator.Validator, f Filters) {
+type ListCommentsFilters struct {
+	StoryId int64
+}
+
+func ValidateListStoriesFilters(v *validator.Validator, f ListStoriesFilters) {
 	v.Check(f.Type == "newest" || f.Type == "best", "type", "must be 'newest' or 'best'")
+}
+
+func ValidateListCommentsFilters(v *validator.Validator, f ListCommentsFilters) {
+	v.Check(f.StoryId > 0, "storyId", "must be higher than 0")
 }

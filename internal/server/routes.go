@@ -13,6 +13,7 @@ func (app *application) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/stories", app.listStoriesHandler)
 	router.HandlerFunc(http.MethodGet, "/v1/stories/:id", app.showStoryHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/comments", app.listCommentsHandler)
 
 	return app.recoverPanic(app.enableCORS(app.rateLimit(router)))
 }

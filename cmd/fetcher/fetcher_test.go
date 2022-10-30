@@ -13,16 +13,16 @@ import (
 )
 
 type ModelsMock struct {
-	state map[int][]int
+	state map[int64][]int64
 }
 
 func NewModelsMock() *ModelsMock {
-	return &ModelsMock{state: map[int][]int{}}
+	return &ModelsMock{state: map[int64][]int64{}}
 }
 
 func (m ModelsMock) InsertStory(story *data.Item) error {
 	if _, ok := m.state[story.Id]; !ok {
-		m.state[story.Id] = []int{}
+		m.state[story.Id] = []int64{}
 	}
 
 	return nil
@@ -38,12 +38,17 @@ func (m ModelsMock) GetStory(id int64) (*data.Story, error) {
 	return nil, nil
 }
 
+// TODO: add test
+func (m ModelsMock) GetComments(storyId int64) ([]*data.Comment, error) {
+	return nil, nil
+}
+
 func (m ModelsMock) InsertComments(story *data.Item, comments []data.Item) error {
 	if _, ok := m.state[story.Id]; !ok {
-		m.state[story.Id] = []int{}
+		m.state[story.Id] = []int64{}
 	}
 
-	commentsIds := make([]int, len(comments))
+	commentsIds := make([]int64, len(comments))
 	for _, comment := range comments {
 		commentsIds = append(commentsIds, comment.Id)
 	}
@@ -79,7 +84,7 @@ func TestFetcher(t *testing.T) {
 		logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 		fetcher := NewFetcher(config, logger, api, store)
-		expected := []int{
+		expected := []int64{
 			32411232,
 			32627286,
 			32626745,
@@ -107,7 +112,7 @@ func TestFetcher(t *testing.T) {
 		logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 		fetcher := NewFetcher(config, logger, api, store)
-		expected := []int{
+		expected := []int64{
 			32411232,
 			32627286,
 			32626745,
@@ -138,7 +143,7 @@ func TestFetcher(t *testing.T) {
 		expected := data.Item{
 			Id:   32411232,
 			Type: "story",
-			Kids: &[]int{
+			Kids: &[]int64{
 				32411282,
 			},
 		}
@@ -169,7 +174,7 @@ func TestFetcher(t *testing.T) {
 				story: data.Item{
 					Id:   32411232,
 					Type: "story",
-					Kids: &[]int{
+					Kids: &[]int64{
 						32411282,
 					},
 				},
@@ -182,7 +187,7 @@ func TestFetcher(t *testing.T) {
 				story: data.Item{
 					Id:   32627286,
 					Type: "story",
-					Kids: &[]int{
+					Kids: &[]int64{
 						32627419,
 						32627299,
 					},
@@ -202,7 +207,7 @@ func TestFetcher(t *testing.T) {
 				story: data.Item{
 					Id:   32626745,
 					Type: "story",
-					Kids: &[]int{
+					Kids: &[]int64{
 						32627477,
 						32626746,
 					},
@@ -222,7 +227,7 @@ func TestFetcher(t *testing.T) {
 				story: data.Item{
 					Id:   32626746,
 					Type: "story",
-					Kids: &[]int{
+					Kids: &[]int64{
 						32626668,
 						32626685,
 					},
@@ -242,7 +247,7 @@ func TestFetcher(t *testing.T) {
 				story: data.Item{
 					Id:   32626663,
 					Type: "story",
-					Kids: &[]int{
+					Kids: &[]int64{
 						32626998,
 						32627287,
 						32626728,
@@ -252,7 +257,7 @@ func TestFetcher(t *testing.T) {
 					{
 						Id:   32626998,
 						Type: "comment",
-						Kids: &[]int{
+						Kids: &[]int64{
 							32627096,
 							32627156,
 						},
@@ -301,7 +306,7 @@ func TestFetcher(t *testing.T) {
 		logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 		fetcher := NewFetcher(config, logger, api, store)
-		expected := map[int][]int{
+		expected := map[int64][]int64{
 			32411232: {
 				32411282,
 			},
@@ -333,7 +338,7 @@ func TestFetcher(t *testing.T) {
 			}
 
 			for _, comment := range expected[storyId] {
-				if !Includes(comments, func(commentId int) bool {
+				if !Includes(comments, func(commentId int64) bool {
 					return comment == commentId
 				}) {
 					t.Errorf("expected %v to be in state", comment)

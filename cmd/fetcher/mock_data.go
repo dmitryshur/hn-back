@@ -34,7 +34,7 @@ func (m Mocks) Item(id int) []byte {
 		32411232: {
 			Id:   32411232,
 			Type: "story",
-			Kids: &[]int{
+			Kids: &[]int64{
 				32411282,
 			},
 		},
@@ -45,7 +45,7 @@ func (m Mocks) Item(id int) []byte {
 		32627286: {
 			Id:   32627286,
 			Type: "story",
-			Kids: &[]int{
+			Kids: &[]int64{
 				32627419,
 				32627299,
 			},
@@ -61,7 +61,7 @@ func (m Mocks) Item(id int) []byte {
 		32626745: {
 			Id:   32626745,
 			Type: "story",
-			Kids: &[]int{
+			Kids: &[]int64{
 				32627477,
 				32626746,
 			},
@@ -77,7 +77,7 @@ func (m Mocks) Item(id int) []byte {
 		32626667: {
 			Id:   32626667,
 			Type: "story",
-			Kids: &[]int{
+			Kids: &[]int64{
 				32626668,
 				32626685,
 			},
@@ -93,7 +93,7 @@ func (m Mocks) Item(id int) []byte {
 		32626663: {
 			Id:   32626663,
 			Type: "story",
-			Kids: &[]int{
+			Kids: &[]int64{
 				32626998,
 				32627287,
 				32626728,
@@ -102,7 +102,7 @@ func (m Mocks) Item(id int) []byte {
 		32626998: {
 			Id:   32626998,
 			Type: "comment",
-			Kids: &[]int{
+			Kids: &[]int64{
 				32627096,
 				32627156,
 			},

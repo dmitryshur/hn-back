@@ -8,15 +8,14 @@ import (
 
 var (
 	ErrRecordNotFound = errors.New("record now found")
-	ErrEditConflict   = errors.New("edit conflict")
 )
 
-// TODO: add get for all comments
 type Db interface {
 	GetStory(id int64) (*Story, error)
 	GetStories(t string) ([]*Story, error)
 	InsertStory(story *Item) error
 
+	GetComments(storyId int64) ([]*Comment, error)
 	InsertComments(story *Item, comments []Item) error
 }
 
@@ -57,6 +56,15 @@ func (m Models) InsertStory(story *Item) error {
 	}
 
 	return nil
+}
+
+func (m Models) GetComments(storyId int64) ([]*Comment, error) {
+	comments, err := m.Comments.GetAll(storyId)
+	if err != nil {
+		return nil, fmt.Errorf("getComments %w", err)
+	}
+
+	return comments, nil
 }
 
 func (m Models) InsertComments(story *Item, comments []Item) error {

@@ -44,7 +44,7 @@ type Fetcher struct {
 	store  data.Db
 }
 
-type stories []int
+type stories []int64
 
 func NewFetcher(config config, logger *jsonlog.Logger, api *Api, store data.Db) *Fetcher {
 	return &Fetcher{config: config, logger: logger, api: api, store: store}
@@ -68,14 +68,14 @@ func (f *Fetcher) Start() {
 			story, err := f.FetchItem(storyId)
 			if err != nil {
 				f.logger.PrintError(err, map[string]string{
-					"id": strconv.Itoa(storyId),
+					"id": strconv.FormatInt(storyId, 10),
 				})
 			}
 
 			comments, err := f.FetchComments(story)
 			if err != nil {
 				f.logger.PrintError(err, map[string]string{
-					"id": strconv.Itoa(storyId),
+					"id": strconv.FormatInt(storyId, 10),
 				})
 			}
 
@@ -102,8 +102,8 @@ func (f *Fetcher) Start() {
 	}
 }
 
-func (f *Fetcher) FetchItem(id int) (*data.Item, error) {
-	url := strings.Replace(itemUrl, "{{id}}", strconv.Itoa(id), -1)
+func (f *Fetcher) FetchItem(id int64) (*data.Item, error) {
+	url := strings.Replace(itemUrl, "{{id}}", strconv.FormatInt(id, 10), -1)
 	url = f.api.baseUrl + url
 
 	response, err := f.api.client.Get(url)
@@ -126,7 +126,7 @@ func (f *Fetcher) FetchComments(item *data.Item) (*[]data.Item, error) {
 		return nil, nil
 	}
 
-	commentIds := make(map[int]struct{})
+	commentIds := make(map[int64]struct{})
 	for _, id := range *item.Kids {
 		commentIds[id] = struct{}{}
 	}
@@ -138,13 +138,13 @@ func (f *Fetcher) FetchComments(item *data.Item) (*[]data.Item, error) {
 		for id := range commentIds {
 			wg.Add(1)
 
-			go func(id int) {
+			go func(id int64) {
 				defer wg.Done()
 
 				comment, err := f.FetchItem(id)
 				if err != nil {
 					f.logger.PrintError(err, map[string]string{
-						"id": strconv.Itoa(id),
+						"id": strconv.FormatInt(id, 10),
 					})
 				}
 
@@ -174,7 +174,7 @@ func (f *Fetcher) FetchBestStories() (stories, error) {
 	}
 	defer response.Body.Close()
 
-	var input = make([]int, bestStoriesCount)
+	var input = make([]int64, bestStoriesCount)
 	err = DecodeFromJson(response.Body, &input)
 	if err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func (f *Fetcher) FetchNewestStories() (stories, error) {
 	}
 	defer response.Body.Close()
 
-	var input = make([]int, newestStoriesCount)
+	var input = make([]int64, newestStoriesCount)
 	err = DecodeFromJson(response.Body, &input)
 	if err != nil {
 		return nil, err

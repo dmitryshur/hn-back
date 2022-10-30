@@ -9,20 +9,72 @@ import (
 )
 
 type Comment struct {
-	Id      int     `json:"id"`
-	Deleted *bool   `json:"deleted"`
-	Type    string  `json:"type"`
-	By      *string `json:"by"`
-	Time    *int    `json:"time"`
-	Dead    *bool   `json:"dead"`
-	Kids    *[]int  `json:"kids"`
-	Parent  *int    `json:"parent"`
-	Text    *string `json:"text"`
-	StoryId int     `json:"story_id"`
+	Id      int64    `json:"id"`
+	Deleted *bool    `json:"deleted"`
+	Type    string   `json:"type"`
+	By      *string  `json:"by"`
+	Time    *int     `json:"time"`
+	Dead    *bool    `json:"dead"`
+	Kids    *[]int64 `json:"kids"`
+	Parent  *int     `json:"parent"`
+	Text    *string  `json:"text"`
+	StoryId int      `json:"story_id"`
 }
 
 type CommentsModel struct {
 	DB *sql.DB
+}
+
+func (c CommentsModel) GetAll(storyId int64) ([]*Comment, error) {
+	query := fmt.Sprintf(`
+		SELECT comments.id, comments.deleted, comments.type, comments.by, comments.time, comments.dead, comments.kids, parent, story_id, text
+		FROM comments
+		INNER JOIN stories
+		ON stories.id = comments.story_id
+		WHERE story_id = '%d'
+		ORDER BY parent`, storyId)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := c.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var comments []*Comment
+
+	for rows.Next() {
+		var comment Comment
+
+		comment.Kids = ToPointer([]int64{})
+		err := rows.Scan(
+			&comment.Id,
+			&comment.Deleted,
+			&comment.Type,
+			&comment.By,
+			&comment.Time,
+			&comment.Dead,
+			pq.Array(comment.Kids),
+			&comment.Parent,
+			&comment.StoryId,
+			&comment.Text,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		comments = append(comments, &comment)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return comments, nil
 }
 
 func (c CommentsModel) Insert(story *Item, comments []Item) error {
@@ -49,7 +101,7 @@ func (c CommentsModel) Insert(story *Item, comments []Item) error {
 
 		kids := comment.Kids
 		if kids == nil {
-			kids = ToPointer([]int{})
+			kids = ToPointer([]int64{})
 		}
 
 		args := []interface{}{
